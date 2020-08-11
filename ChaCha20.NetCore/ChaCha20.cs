@@ -22,13 +22,12 @@ namespace ChaCha20.NetCore
         private static readonly uint[] TauSigma =
             LE_To_UInt32(Encoding.ASCII.GetBytes("expand 16-byte k" + "expand 32-byte k"), 0, 8);
 
-        private readonly PinnedMemory<byte> _bufferPin;
         private readonly byte[] _keyStream = new byte[StateSize * 4]; // expanded state, 64 bytes
         private readonly PinnedMemory<byte> _keyStreamPin;
         private readonly uint[] _engineState = new uint[StateSize]; // state
         private readonly PinnedMemory<uint> _engineStatePin;
         private readonly PinnedMemory<uint> _xPin;
-        private byte[] _buffer = new byte[1];
+        private byte[] _buffer;
 
         /*
          * variables to hold the state of the engine
@@ -53,7 +52,6 @@ namespace ChaCha20.NetCore
         {
             _keyStreamPin = new PinnedMemory<byte>(_keyStream);
             _engineStatePin = new PinnedMemory<uint>(_engineState);
-            _bufferPin = new PinnedMemory<byte>(_buffer);
             _xPin = new PinnedMemory<uint>(_x);
 
             Rounds = rounds;
@@ -65,7 +63,6 @@ namespace ChaCha20.NetCore
             Reset();
             _keyStreamPin?.Dispose();
             _engineStatePin?.Dispose();
-            _bufferPin?.Dispose();
             _xPin?.Dispose();
         }
 
