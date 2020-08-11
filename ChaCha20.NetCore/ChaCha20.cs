@@ -80,6 +80,11 @@ namespace ChaCha20.NetCore
             return _buffer.Length;
         }
 
+        public byte[] GetBuffer()
+        {
+            return _buffer;
+        }
+
         public void Update(byte value)
         {
             var block = new byte[1];
