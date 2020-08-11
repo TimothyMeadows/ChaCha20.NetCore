@@ -155,11 +155,12 @@ namespace ChaCha20.NetCore
             _index = 0;
             ResetLimitCounter();
             ResetCounter();
+            _buffer = null;
         }
 
         /**
          * Rotate left
-         *
+         *s
          * @param   x   value to rotate
          * @param   y   amount to rotate x
          *
