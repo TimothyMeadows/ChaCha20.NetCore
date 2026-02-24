@@ -7,6 +7,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ChaCha20.NetCore.Example", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChaCha20.NetCore", "ChaCha20.NetCore\ChaCha20.NetCore.csproj", "{B1BB0425-A8C6-4247-BAE2-BC82DFAB35E2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChaCha20.NetCore.Tests", "ChaCha20.NetCore.Tests\ChaCha20.NetCore.Tests.csproj", "{63A876A6-01F5-4055-9781-FA14F9189C14}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{B1BB0425-A8C6-4247-BAE2-BC82DFAB35E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B1BB0425-A8C6-4247-BAE2-BC82DFAB35E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B1BB0425-A8C6-4247-BAE2-BC82DFAB35E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63A876A6-01F5-4055-9781-FA14F9189C14}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63A876A6-01F5-4055-9781-FA14F9189C14}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63A876A6-01F5-4055-9781-FA14F9189C14}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63A876A6-01F5-4055-9781-FA14F9189C14}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
