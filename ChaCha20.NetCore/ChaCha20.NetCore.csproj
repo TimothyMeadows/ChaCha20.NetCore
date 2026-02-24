@@ -1,19 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Authors>Timothy D Meadows II</Authors>
-    <Description>Implementation of chacha20 cipher, designed by D. J. Bernstein. Optimized for PinnedMemory</Description>
+    <Description>Implementation of ChaCha20 cipher (RFC 8439 style nonce), optimized for pinned memory usage.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
     <PackageProjectUrl>https://github.com/TimothyMeadows/ChaCha20.NetCore</PackageProjectUrl>
     <RepositoryUrl>https://github.com/TimothyMeadows/ChaCha20.NetCore</RepositoryUrl>
-    <RepositoryType>Github</RepositoryType>
-    <Version>1.0.3</Version>
+    <RepositoryType>GitHub</RepositoryType>
+    <Version>1.1.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="PinnedMemory" Version="1.0.1" />
+    <PackageReference Include="PinnedMemory" Version="2.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -22,5 +23,4 @@
       <PackagePath></PackagePath>
     </None>
   </ItemGroup>
-
 </Project>
