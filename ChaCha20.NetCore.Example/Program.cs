@@ -1,29 +1,26 @@
-﻿using System;
 using System.Security.Cryptography;
 using PinnedMemory;
 
-namespace ChaCha20.NetCore.Example
+namespace ChaCha20.NetCore.Example;
+
+internal static class Program
 {
-    class Program
+    private static void Main(string[] args)
     {
-        static void Main(string[] args)
-        {
-            var iv = new byte[16];
-            var key = new byte[32];
+        var nonce = RandomNumberGenerator.GetBytes(12);
+        var key = RandomNumberGenerator.GetBytes(32);
+        var message = new byte[] { 63, 61, 77, 20, 63, 61, 77, 20, 63, 61, 77 }; // caw caw caw in utf8
 
-            using var provider = new RNGCryptoServiceProvider();
-            provider.GetBytes(iv);
-            provider.GetBytes(key);
+        using var keyPin = new PinnedMemory<byte>(key, false);
+        using var cipher = new ChaCha20(keyPin, nonce);
+        using var messagePin = new PinnedMemory<byte>(message, false);
 
-            using var keyPin = new PinnedMemory<byte>(key, false);
-            using var cipher = new ChaCha20(keyPin, iv);
-            cipher.UpdateBlock(new PinnedMemory<byte>(new byte[] {63, 61, 77, 20, 63, 61, 77, 20, 63, 61, 77}, false),
-                0, 11); // caw caw caw in utf8
+        cipher.UpdateBlock(messagePin, 0, message.Length);
 
-            using var output = new PinnedMemory<byte>(new byte[cipher.GetLength()]);
-            cipher.DoFinal(output, 0);
+        using var output = new PinnedMemory<byte>(new byte[cipher.GetLength()]);
+        cipher.DoFinal(output, 0);
 
-            Console.WriteLine(BitConverter.ToString(output.ToArray()));
-        }
+        Console.WriteLine(BitConverter.ToString(output.ToArray()));
+        CryptographicOperations.ZeroMemory(key);
     }
 }
