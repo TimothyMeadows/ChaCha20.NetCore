@@ -1,5 +1,6 @@
 using System;
 using System.Buffers;
+using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using PinnedMemory;
@@ -133,7 +134,7 @@ public sealed class ChaCha20 : IDisposable
         ArgumentNullException.ThrowIfNull(output);
         EnsureNotDisposed();
         OutputLength(output.Length, offset, _buffer.Length, "output buffer too short");
-        ProcessBuffer((i, b) => output[i + offset] = b);
+        ProcessBufferToSpan(new PinnedMemorySpanWriter(output, offset));
     }
 
     public void DoFinal(byte[] output, int offset)
@@ -141,7 +142,7 @@ public sealed class ChaCha20 : IDisposable
         ArgumentNullException.ThrowIfNull(output);
         EnsureNotDisposed();
         OutputLength(output.Length, offset, _buffer.Length, "output buffer too short");
-        ProcessBuffer((i, b) => output[i + offset] = b);
+        ProcessBufferToSpan(output.AsSpan(offset, _buffer.Length));
     }
 
     public void Reset()
@@ -163,14 +164,15 @@ public sealed class ChaCha20 : IDisposable
         _buffer = expanded;
     }
 
-    private void ProcessBuffer(Action<int, byte> writeOutput)
+    private void ProcessBufferToSpan(PinnedMemorySpanWriter output)
     {
         if (LimitExceeded((uint)_buffer.Length))
         {
             throw new InvalidOperationException("2^70 byte limit per nonce would be exceeded; change nonce.");
         }
 
-        for (var i = 0; i < _buffer.Length; i++)
+        var outputIndex = 0;
+        while (outputIndex < _buffer.Length)
         {
             if (_index == 0)
             {
@@ -178,9 +180,74 @@ public sealed class ChaCha20 : IDisposable
                 AdvanceCounter();
             }
 
-            writeOutput(i, (byte)(_keyStream[_index] ^ _buffer[i]));
-            _index = (_index + 1) & 63;
+            var availableInBlock = 64 - _index;
+            var remaining = _buffer.Length - outputIndex;
+            var chunkLength = Math.Min(availableInBlock, remaining);
+            XorIntoPinned(_buffer.AsSpan(outputIndex, chunkLength), _keyStream.AsSpan(_index, chunkLength), output, outputIndex);
+
+            _index = (_index + chunkLength) & 63;
+            outputIndex += chunkLength;
         }
+    }
+
+    private void ProcessBufferToSpan(Span<byte> output)
+    {
+        if (LimitExceeded((uint)_buffer.Length))
+        {
+            throw new InvalidOperationException("2^70 byte limit per nonce would be exceeded; change nonce.");
+        }
+
+        var outputIndex = 0;
+        while (outputIndex < _buffer.Length)
+        {
+            if (_index == 0)
+            {
+                GenerateKeyStream(_keyStream);
+                AdvanceCounter();
+            }
+
+            var availableInBlock = 64 - _index;
+            var remaining = _buffer.Length - outputIndex;
+            var chunkLength = Math.Min(availableInBlock, remaining);
+            XorInto(_buffer.AsSpan(outputIndex, chunkLength), _keyStream.AsSpan(_index, chunkLength), output.Slice(outputIndex, chunkLength));
+
+            _index = (_index + chunkLength) & 63;
+            outputIndex += chunkLength;
+        }
+    }
+
+    private static void XorInto(ReadOnlySpan<byte> input, ReadOnlySpan<byte> keyStream, Span<byte> output)
+    {
+        var i = 0;
+        if (Vector.IsHardwareAccelerated && input.Length >= Vector<byte>.Count)
+        {
+            var vectorLength = Vector<byte>.Count;
+            var simdEnd = input.Length - (input.Length % vectorLength);
+            for (; i < simdEnd; i += vectorLength)
+            {
+                var inputVector = new Vector<byte>(input.Slice(i, vectorLength));
+                var keyVector = new Vector<byte>(keyStream.Slice(i, vectorLength));
+                Vector.Xor(inputVector, keyVector).CopyTo(output.Slice(i, vectorLength));
+            }
+        }
+
+        for (; i < input.Length; i++)
+        {
+            output[i] = (byte)(input[i] ^ keyStream[i]);
+        }
+    }
+
+    private static void XorIntoPinned(ReadOnlySpan<byte> input, ReadOnlySpan<byte> keyStream, PinnedMemorySpanWriter output, int outputOffset)
+    {
+        for (var i = 0; i < input.Length; i++)
+        {
+            output.Write(outputOffset + i, (byte)(input[i] ^ keyStream[i]));
+        }
+    }
+
+    private readonly struct PinnedMemorySpanWriter(PinnedMemory<byte> output, int baseOffset)
+    {
+        public void Write(int offset, byte value) => output[offset + baseOffset] = value;
     }
 
     private static uint RotateLeft(uint x, int y) => (x << y) | (x >> (32 - y));

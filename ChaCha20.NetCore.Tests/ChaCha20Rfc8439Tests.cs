@@ -90,6 +90,35 @@ public class ChaCha20Rfc8439Tests
         Assert.Equal(prefixedPlaintext, decrypted);
     }
 
+    [Fact]
+    public void Encryption_WithPinnedOutput_MatchesByteArrayOutput_ForLargePayload()
+    {
+        var key = HexToBytes("000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f");
+        var nonce = HexToBytes("000000000000004a00000000");
+        var plaintext = new byte[4096 + 37];
+        for (var i = 0; i < plaintext.Length; i++)
+        {
+            plaintext[i] = (byte)(i % 251);
+        }
+
+        using var keyPin1 = new PinnedMemory<byte>(key, false);
+        using var cipherArrayOutput = new ChaCha20(keyPin1, nonce);
+        var outputArray = new byte[plaintext.Length];
+        cipherArrayOutput.UpdateBlock(plaintext, 0, plaintext.Length);
+        cipherArrayOutput.DoFinal(outputArray, 0);
+
+        using var keyPin2 = new PinnedMemory<byte>(key, false);
+        using var cipherPinnedOutput = new ChaCha20(keyPin2, nonce);
+        using var outputPinned = new PinnedMemory<byte>(new byte[plaintext.Length], false);
+        cipherPinnedOutput.UpdateBlock(plaintext, 0, plaintext.Length);
+        cipherPinnedOutput.DoFinal(outputPinned, 0);
+
+        for (var i = 0; i < plaintext.Length; i++)
+        {
+            Assert.Equal(outputArray[i], outputPinned[i]);
+        }
+    }
+
     private static byte[] HexToBytes(string hex)
     {
         if (hex.Length % 2 != 0)
