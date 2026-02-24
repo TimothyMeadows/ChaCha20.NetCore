@@ -19,6 +19,7 @@ The implementation is optimized for secure memory handling and integrates with [
 - [API reference](#api-reference)
   - [`ChaCha20`](#chacha20)
 - [Usage notes](#usage-notes)
+- [Performance notes](#performance-notes)
 - [Security notes](#security-notes)
 - [Validation and test vectors](#validation-and-test-vectors)
 - [Development](#development)
@@ -149,6 +150,15 @@ If you split messages across frames/chunks, ensure both sender and receiver agre
 - message boundaries
 - replay protections
 - encoding/canonicalization of higher-level payloads
+
+---
+
+## Performance notes
+
+- The `DoFinal(byte[] output, int offset)` path uses a SIMD-accelerated XOR routine when hardware vector support is available at runtime (`Vector.IsHardwareAccelerated`).
+- SIMD use is automatic and transparent; no extra configuration is required.
+- A scalar fallback is always used when SIMD is unavailable or for any trailing bytes that do not fill a full vector width.
+- The `DoFinal(PinnedMemory<byte> output, int offset)` overload currently uses scalar writes.
 
 ---
 
